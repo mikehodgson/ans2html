@@ -29,25 +29,256 @@ class String
     def ansi2html
         ansi = StringScanner.new(self)
         html = StringIO.new
+        numOpen = 0
+        foreground = "white"
+        background = "bg-black"
+        bold = false
+        boldbg = false
         until ansi.eos?
             if ansi.scan(/\&\#26\;.*/)
             	html.print(%{})
-            elsif ansi.scan(/\e\[0?m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="#{AnsiColor["37"]} #{AnsiColor["40"]}">#{ansi[1]}</span>})
-            elsif ansi.scan(/\e\[0;(\d+);(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="#{AnsiColor[ansi[2]]} #{AnsiColor[ansi[1]]}">#{ansi[3]}</span>})
-            elsif ansi.scan(/\e\[1;(\d+);(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="bold-#{AnsiColor[ansi[2]]} #{AnsiColor[ansi[1]]}">#{ansi[3]}</span>})
-            elsif ansi.scan(/\e\[0;(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="#{AnsiColor[ansi[1]]}">#{ansi[2]}</span>})
-            elsif ansi.scan(/\e\[1;(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="bold-#{AnsiColor[ansi[1]]}">#{ansi[2]}</span>})
-            elsif ansi.scan(/\e\[(\d+);(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="#{AnsiColor[ansi[1]]} #{AnsiColor[ansi[2]]}">#{ansi[3]}</span>})
-            elsif ansi.scan(/\e\[(\d+)m([^\e]*)(?=\e|$)/)
-                html.print(%{<span class="#{AnsiColor[ansi[1]]}">#{ansi[2]}</span>})
-            elsif ansi.scan(/\e\[([\d;]+)m([^\e]*)(?=\e|$)/)
-                html.print(%{})
+        	elsif ansi.scan(/\e\[0m/)
+            	for i in 1..numOpen
+            		html.print(%{</span>})
+            	end
+    			foreground = "white"
+		        background = "bg-black"
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen = 1
+            elsif ansi.scan(/\e\[0\;5\m/)
+	   	        foreground = foreground.gsub!(/bold-/,'')
+	   	        background = 'bold-' + background
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;1\m/)
+            	if !bold
+	   	        	foreground = 'bold-' + foreground
+	   	        end
+                html.print(%{<span class="#{foreground}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;5\;(3\d)m/)
+	   	        foreground = "#{AnsiColor[ansi[1]]}"
+	   	        background = 'bold-' + background
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;5\;(4\d)m/)
+	   	        background = "bold-#{AnsiColor[ansi[1]]}"
+	   	        if bold
+	   	        	foreground = foreground.gsub!(/bold-/,'')
+	   	        end
+                html.print(%{<span class="#{background} #{foreground}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[1\;5\;(3\d)m/)
+	   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+	   	        background = 'bold-' + background
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[1\;5\;(4\d)m/)
+	   	        background = "bold-#{AnsiColor[ansi[1]]}"
+	   	        if !bold
+	   	        	foreground = "bold-" + foreground
+	   	        end
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[5\;(3\d)m/)
+            	if bold
+		   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+            	else
+	   		        foreground = "#{AnsiColor[ansi[1]]}"
+            	end
+            	background = "bold-" + background;
+                html.print(%{<span class="#{foreground} #{background}">})
+                numOpen += 1
+            elsif ansi.scan(/\e\[5\;(4\d)m/)
+	   	        background = "bold-#{AnsiColor[ansi[1]]}"
+   	            html.print(%{<span class="#{background}">})
+                numOpen += 1
+            elsif ansi.scan(/\e\[5\;(3\d);(4\d)m/)
+            	if bold
+		   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+		   	        background = "bold-#{AnsiColor[ansi[2]]}"
+	                html.print(%{<span class="#{foreground} #{background}">})
+            	else
+		   	        foreground = "#{AnsiColor[ansi[1]]}"
+		   	        background = "bold-#{AnsiColor[ansi[2]]}"
+	                html.print(%{<span class="#{foreground} #{background}">})
+            	end
+                numOpen += 1
+            elsif ansi.scan(/\e\[5\;(4\d);(3\d)m/)
+            	if bold
+		   	        foreground = "bold-#{AnsiColor[ansi[2]]}"
+		   	        background = "bold-#{AnsiColor[ansi[1]]}"
+	                html.print(%{<span class="#{foreground} #{background}">})
+            	else
+		   	        foreground = "#{AnsiColor[ansi[2]]}"
+		   	        background = "bold-#{AnsiColor[ansi[1]]}"
+	                html.print(%{<span class="#{foreground} #{background}">})
+            	end
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;5\;(3\d);(4\d)m/)
+	   	        foreground = "#{AnsiColor[ansi[1]]}"
+	   	        background = "bold-#{AnsiColor[ansi[2]]}"
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0;5\;(4\d);(3\d)m/)
+	   	        foreground = "#{AnsiColor[ansi[2]]}"
+	   	        background = "bold-#{AnsiColor[ansi[1]]}"
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;1\;(3\d);(4\d)m/)
+	   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+	   	        if boldbg
+		   	        background = "bold-#{AnsiColor[ansi[2]]}"
+	   	        else
+		   	        background = "#{AnsiColor[ansi[2]]}"
+	   	        end
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;1\;(4\d);(3\d)m/)
+	   	        foreground = "bold-#{AnsiColor[ansi[2]]}"
+	   	        if boldbg
+	   	        	background = "bold-#{AnsiColor[ansi[1]]}"
+	   	        else
+	   	        	background = "#{AnsiColor[ansi[1]]}"
+	   	        end
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;1\;(3\d)m/)
+	   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+                html.print(%{<span class="#{foreground}">})
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;(4\d)\;(3\d)m/)
+            	for i in 1..numOpen
+            		html.print(%{</span>})
+            	end
+                html.print(%{<span class="#{AnsiColor[ansi[2]]} #{AnsiColor[ansi[1]]}">})
+   	            foreground = AnsiColor[ansi[2]]
+	            background = AnsiColor[ansi[1]]
+                numOpen = 1
+                bold = false
+                boldbg = false
+            elsif ansi.scan(/\e\[1\;(4\d)\;(3\d)m/)
+            	for i in 1..numOpen
+            		html.print(%{</span>})
+            	end
+                html.print(%{<span class="bold-#{AnsiColor[ansi[2]]} #{AnsiColor[ansi[1]]}">})
+   	            foreground = "bold-#{AnsiColor[ansi[2]]}"
+	   	        if boldbg
+	   	        	background = "bold-#{AnsiColor[ansi[1]]}"
+	   	        else
+	   	        	background = "#{AnsiColor[ansi[1]]}"
+	   	        end
+                numOpen = 1
+                bold = true
+            elsif ansi.scan(/\e\[0\;(3\d)m/)
+	   	        foreground = "#{AnsiColor[ansi[1]]}"
+	   	        background = "bg-black"
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                boldbg = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[0\;(4\d)m/)
+	   	        background = "#{AnsiColor[ansi[1]]}"
+	   	        foreground = "white"
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = false
+                boldbg = false
+                numOpen += 1
+            elsif ansi.scan(/\e\[1\;(3\d)m/)
+                html.print(%{<span class="bold-#{AnsiColor[ansi[1]]}">})
+	   	        foreground = "bold-#{AnsiColor[ansi[1]]}"
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[1\;(4\d)m/)
+            	if boldbg
+	   	        	background = "bold-#{AnsiColor[ansi[1]]}"
+	   	        else
+	   	        	background = "#{AnsiColor[ansi[1]]}"
+	   	        end
+	   	        if !bold
+	   	        	foreground = "bold-" + foreground
+	   	        end
+                html.print(%{<span class="#{foreground} #{background}">})
+                bold = true
+                numOpen += 1
+            elsif ansi.scan(/\e\[(4\d)\;(3\d)m/)
+            	if bold
+	   	            foreground = "bold-#{AnsiColor[ansi[2]]}"
+	            	if boldbg
+		   	        	background = "bold-#{AnsiColor[ansi[1]]}"
+		   	        else
+		   	        	background = "#{AnsiColor[ansi[1]]}"
+		   	        end
+            	else
+   	                foreground = AnsiColor[ansi[2]]
+	            	if boldbg
+		   	        	background = "bold-#{AnsiColor[ansi[1]]}"
+		   	        else
+		   	        	background = "#{AnsiColor[ansi[1]]}"
+		   	        end
+            	end
+                html.print(%{<span class="#{foreground} #{background}">})
+                numOpen += 1
+            elsif ansi.scan(/\e\[(\d)m/)
+            	if ansi[1] == '1'
+	            	if !bold
+		            	foreground = 'bold-' + foreground
+	            	end
+	                html.print(%{<span class="#{foreground}">})
+	                bold = true
+            	elsif ansi[1] == '0'
+        			foreground = "white"
+			        background = "bg-black"
+	                html.print(%{<span class="#{foreground} #{background}">})
+	                bold = false
+            	elsif ansi[1] == '7'
+	            	for i in 1..numOpen
+	            		html.print(%{</span>})
+	            	end
+            		if bold
+            			newf = background.gsub!(/bg\-/,'bold-')
+	            		newb = foreground.gsub!(/bold\-/,'bg-')
+            		else
+            			newf = background.gsub!(/bg\-/,'')
+	            		newb = "bg-" + foreground.gsub!(/bold\-/,'')
+            		end
+            		foreground = newf
+            		background = newb
+	                html.print(%{<span class="#{foreground} #{background}">})
+	                numOpen = 0
+				end
+				numOpen += 1            	
+            elsif ansi.scan(/\e\[(3\d)m/m)
+            	if bold
+	   	            foreground = "bold-#{AnsiColor[ansi[1]]}"
+    	            html.print(%{<span class="bold-#{AnsiColor[ansi[1]]}">})
+            	else
+	                html.print(%{<span class="#{AnsiColor[ansi[1]]}">})
+   	                foreground = AnsiColor[ansi[1]]
+            	end
+                numOpen += 1
+            elsif ansi.scan(/\e\[(4\d)m/m)
+	            html.print(%{<span class="#{AnsiColor[ansi[1]]}">})
+                background = AnsiColor[ansi[1]]
+                numOpen += 1
+            elsif ansi.scan(/\e\[m/m)
+    			foreground = "white"
+		        background = "bg-black"
+                html.print(%{<span class="#{foreground}">})
+                bold = false
+                numOpen += 1
             elsif ansi.scan(/\e\[(\d+)C/)
             	i = 1
             	begin
@@ -58,17 +289,22 @@ class String
                 html.print(ansi.scan(/./m))
             end
         end
+        for i in 1..numOpen
+            html.print(%{</span>})
+        end
         html.string
-    end
+	end
 end
 
 fn = ARGV.first
 coder = HTMLEntities.new
 content = ''
 
+# Open file, explicitly select IBM Codepage 437
 File.open(fn, "rb:ibm437") do |f|
 	loop do
 		break if not buf = f.gets(nil, 1)
+		# Don't encode characters we'll need later.
 		if (buf.ord > 126 || buf.ord < 32) && buf.ord != 27 && buf.ord != 13 && buf.ord != 10
 			content += coder.encode(buf, :decimal)
 		else
@@ -77,55 +313,78 @@ File.open(fn, "rb:ibm437") do |f|
 	end
 end
 
-content.gsub!(/\r/, '<br>')
-content.gsub!(/\s/, '&nbsp;')
-content.gsub!(/\&\#26\;.*/, '')
+# Convert carriage returns & spaces, remove SAUCE, convert to HTML!
+content.gsub!(/\r/, '<br>').gsub!(/\s/, '&nbsp;').gsub!(/\&\#26\;.*/, '')
 content = content.ansi2html
-print ""
+
+# Print the output!
 print %{
 <html><head>
 	<style>
+		@font-face {
+			font-family: ibm437;
+			src: url(perfect_dos.ttf);
+		}
+
+		body,html {
+			background-color: #000;
+		}
+
 		.black 		{color: #000000}
-		.red 		{color: #800000}
-		.green		{color: #008000}
-		.yellow 	{color: #808000}
-		.blue		{color: #000080}
-		.magenta 	{color: #800080}
-		.cyan 		{color: #008080}
+		.red 		{color: #aa0000}
+		.green		{color: #00aa00}
+		.yellow 	{color: #aa5500}
+		.blue		{color: #0000aa}
+		.magenta 	{color: #aa00aa}
+		.cyan 		{color: #00aaaa}
 		.white		{color: #c0c0c0}
 
-		.bold-black 	{color: #606060}
-		.bold-red 		{color: #ff0000}
-		.bold-green		{color: #00ff00}
-		.bold-yellow 	{color: #ffff00}
-		.bold-blue		{color: #0000ff}
-		.bold-magenta 	{color: #ff00ff}
-		.bold-cyan 		{color: #00ffff}
-		.bold-white		{color: #ffffff}
+		.bold-black, .black > .bold 	{color: #606060}
+		.bold-red, .red > .bold 		{color: #ff5555}
+		.bold-green, .green > .bold		{color: #00ff00}
+		.bold-yellow, .yellow > .bold 	{color: #ffff00}
+		.bold-blue, .blue > .bold		{color: #0000ff}
+		.bold-magenta, .magenta > .bold 	{color: #ff55ff}
+		.bold-cyan, .cyan > .bold 		{color: #55ffff}
+		.bold-white, .white > .bold		{color: #ffffff}
 
 		.bg-black 		{background-color: #000000}
-		.bg-red 		{background-color: #800000}
-		.bg-green		{background-color: #008000}
-		.bg-yellow 	    {background-color: #808000}
-		.bg-blue		{background-color: #000080}
-		.bg-magenta 	{background-color: #800080}
-		.bg-cyan 		{background-color: #008080}
+		.bg-red 		{background-color: #aa0000}
+		.bg-green		{background-color: #00aa00}
+		.bg-yellow 	    {background-color: #aa5500}
+		.bg-blue		{background-color: #0000aa}
+		.bg-magenta 	{background-color: #aa00aa}
+		.bg-cyan 		{background-color: #00aaaa}
 		.bg-white		{background-color: #c0c0c0}
 
-pre {
-	white-space: pre;           /* CSS 2.0 */
-	white-space: pre-wrap;      /* CSS 2.1 */
-	white-space: pre-line;      /* CSS 3.0 */
-	white-space: -pre-wrap;     /* Opera 4-6 */
-	white-space: -o-pre-wrap;   /* Opera 7 */
-	white-space: -moz-pre-wrap; /* Mozilla */
-	white-space: -hp-pre-wrap;  /* HP Printers */
-	word-wrap: break-word;      /* IE 5+ */
-	}
+		.bold-bg-black 		{background-color: #606060}
+		.bold-bg-red 		{background-color: #ff0000}
+		.bold-bg-green		{background-color: #00ff00}
+		.bold-bg-yellow 	{background-color: #ffff00}
+		.bold-bg-blue		{background-color: #0000ff}
+		.bold-bg-magenta 	{background-color: #ff55ff}
+		.bold-bg-cyan 		{background-color: #00ffff}
+		.bold-bg-white		{background-color: #ffffff}
+
+		pre {
+			white-space: pre;           /* CSS 2.0 */
+			white-space: pre-wrap;      /* CSS 2.1 */
+			white-space: pre-line;      /* CSS 3.0 */
+			white-space: -pre-wrap;     /* Opera 4-6 */
+			white-space: -o-pre-wrap;   /* Opera 7 */
+			white-space: -moz-pre-wrap; /* Mozilla */
+			white-space: -hp-pre-wrap;  /* HP Printers */
+			word-wrap: break-word;      /* IE 5+ */
+			font-family: ibm437;
+			line-height: 16px;
+			letter-spacing: -1px;
+		}
 </style>
-</head><body><pre style="color: #ccc; background: #000; width: 640px;">
+</head>
+<body>
+	<pre style="color: #ccc; background: #000; width: 640px; margin:auto; float: none;">
+		#{content}
+	</pre>
+</body>
+</html>
 }
-print content
-# print "<br>xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# print "</pre><img src=\"http://planettelex.org/img/logo.png\"></body></html>"
-# print coder.encode(content, :decimal)
