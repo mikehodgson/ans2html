@@ -243,6 +243,7 @@ class String
 			        background = "bg-black"
 	                html.print(%{<span class="#{foreground} #{background}">})
 	                bold = false
+	                boldbg = false
             	elsif ansi[1] == '7'
 	            	for i in 1..numOpen
 	            		html.print(%{</span>})
@@ -270,14 +271,19 @@ class String
             	end
                 numOpen += 1
             elsif ansi.scan(/\e\[(4\d)m/m)
-	            html.print(%{<span class="#{AnsiColor[ansi[1]]}">})
-                background = AnsiColor[ansi[1]]
+            	if boldbg
+	                background = "bold-" + AnsiColor[ansi[1]]
+            	else
+	                background = AnsiColor[ansi[1]]
+            	end
+	            html.print(%{<span class="#{background}">})
                 numOpen += 1
             elsif ansi.scan(/\e\[m/m)
     			foreground = "white"
 		        background = "bg-black"
-                html.print(%{<span class="#{foreground}">})
+                html.print(%{<span class="#{foreground} #{background}">})
                 bold = false
+                boldbg = false
                 numOpen += 1
             elsif ansi.scan(/\e\[(\d+)C/)
             	i = 1
@@ -285,6 +291,8 @@ class String
             		html.print(%{&nbsp;})
             		i += 1
             	end until i > ansi[1].to_i
+            elsif ansi.scan(/\e\[C/)
+				html.print(%{&nbsp;})
             else
                 html.print(ansi.scan(/./m))
             end
@@ -314,7 +322,7 @@ File.open(fn, "rb:ibm437") do |f|
 end
 
 # Convert carriage returns & spaces, remove SAUCE, convert to HTML!
-content.gsub!(/\r/, '<br>').gsub!(/\s/, '&nbsp;').gsub!(/\&\#26\;.*/, '')
+content.gsub!(/\r/, '<br>').gsub!(/\s/, '&nbsp;')
 content = content.ansi2html
 
 # Print the output!
