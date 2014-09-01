@@ -113,8 +113,9 @@ File.open(fn, "rb:ibm437") do |f|
 end
 
 # Convert carriage returns & spaces, remove SAUCE, convert to HTML!
-content.gsub!(/\r/, '<br>').gsub!(/\s/, '&nbsp;')
+content.gsub!(/\r/, '<br>').gsub!(/\s/, '&nbsp;').gsub!(/\n/, '')
 content = content.ansi2html
+content.gsub!(/\<span ([^>]*)>([^>]*)\<br\>([^<]*)\<\/span\>/, '<span \1>\2</span><br><span \1>\3</span>')
 
 # Print the output!
 print %{
@@ -122,47 +123,48 @@ print %{
 <html>
 <head>
 	<style>
-		body,html {
-			background-color: #000;
+		.ansi br {
+			line-height: 0%;
 		}
 
-		.fg-black 		{color: #000000}
-		.fg-red 		{color: #aa0000}
-		.fg-green		{color: #00aa00}
-		.fg-yellow 		{color: #aa5500}
-		.fg-blue		{color: #0000aa}
-		.fg-magenta 	{color: #aa00aa}
-		.fg-cyan 		{color: #00aaaa}
-		.fg-white		{color: #c0c0c0}
+		.ansi .fg-black 	{color: #000000}
+		.ansi .fg-red 		{color: #aa0000}
+		.ansi .fg-green		{color: #00aa00}
+		.ansi .fg-yellow 	{color: #aa5500}
+		.ansi .fg-blue		{color: #0000aa}
+		.ansi .fg-magenta 	{color: #aa00aa}
+		.ansi .fg-cyan 		{color: #00aaaa}
+		.ansi .fg-white		{color: #c0c0c0}
 
-		.bold-fg-black 		{color: #606060}
-		.bold-fg-red 		{color: #ff5555}
-		.bold-fg-green		{color: #00ff00}
-		.bold-fg-yellow 	{color: #ffff00}
-		.bold-fg-blue		{color: #0000ff}
-		.bold-fg-magenta 	{color: #ff55ff}
-		.bold-fg-cyan 		{color: #55ffff}
-		.bold-fg-white		{color: #ffffff}
+		.ansi .bold-fg-black 	{color: #606060}
+		.ansi .bold-fg-red 		{color: #ff5555}
+		.ansi .bold-fg-green	{color: #00ff00}
+		.ansi .bold-fg-yellow 	{color: #ffff00}
+		.ansi .bold-fg-blue		{color: #0000ff}
+		.ansi .bold-fg-magenta 	{color: #ff55ff}
+		.ansi .bold-fg-cyan		{color: #55ffff}
+		.ansi .bold-fg-white	{color: #ffffff}
 
-		.bg-black 		{background-color: #000000}
-		.bg-red 		{background-color: #aa0000}
-		.bg-green		{background-color: #00aa00}
-		.bg-yellow 	    {background-color: #aa5500}
-		.bg-blue		{background-color: #0000aa}
-		.bg-magenta 	{background-color: #aa00aa}
-		.bg-cyan 		{background-color: #00aaaa}
-		.bg-white		{background-color: #c0c0c0}
+		.ansi .bg-black		{background-color: #000000}
+		.ansi .bg-red 		{background-color: #aa0000}
+		.ansi .bg-green		{background-color: #00aa00}
+		.ansi .bg-yellow    {background-color: #aa5500}
+		.ansi .bg-blue		{background-color: #0000aa}
+		.ansi .bg-magenta 	{background-color: #aa00aa}
+		.ansi .bg-cyan 		{background-color: #00aaaa}
+		.ansi .bg-white		{background-color: #c0c0c0}
 
-		.bold-bg-black 		{background-color: #606060}
-		.bold-bg-red 		{background-color: #ff5555}
-		.bold-bg-green		{background-color: #00ff00}
-		.bold-bg-yellow 	{background-color: #ffff00}
-		.bold-bg-blue		{background-color: #0000ff}
-		.bold-bg-magenta 	{background-color: #ff55ff}
-		.bold-bg-cyan 		{background-color: #55ffff}
-		.bold-bg-white		{background-color: #ffffff}
+		.ansi .bold-bg-black	{background-color: #606060}
+		.ansi .bold-bg-red 		{background-color: #ff5555}
+		.ansi .bold-bg-green	{background-color: #00ff00}
+		.ansi .bold-bg-yellow 	{background-color: #ffff00}
+		.ansi .bold-bg-blue		{background-color: #0000ff}
+		.ansi .bold-bg-magenta 	{background-color: #ff55ff}
+		.ansi .bold-bg-cyan		{background-color: #55ffff}
+		.ansi .bold-bg-white	{background-color: #ffffff}
 
-		pre {
+		pre.ansi {
+			background-color: #000;
 			white-space: pre;           /* CSS 2.0 */
 			white-space: pre-wrap;      /* CSS 2.1 */
 			white-space: pre-line;      /* CSS 3.0 */
@@ -171,14 +173,26 @@ print %{
 			white-space: -moz-pre-wrap; /* Mozilla */
 			white-space: -hp-pre-wrap;  /* HP Printers */
 			word-wrap: break-word;      /* IE 5+ */
+			font-family: monospace;
 			line-height: 15px;
 			font-size: 15px;
 			letter-spacing: 0px;
+			padding: 0px;
+			margin: auto;
+			float: none;
+			width: 721px;
+		}
+
+		.ansi span {
+			margin-bottom: 0px;
+			padding: 0px;
+			height: 15px;
+			line-height: 15px;
 		}
 </style>
 </head>
 <body>
-	<pre class="fg-white bg-black" style="width: 721px; margin:auto; float: none;">
+	<pre class="ansi">
 		#{content}
 	</pre>
 </body>
