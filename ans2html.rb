@@ -85,6 +85,8 @@ class String
             	end until i > ansi[1].to_i
             elsif ansi.scan(/\e\[C/)
 				html.print(%{&nbsp;})
+            elsif ansi.scan(/\e\[[\d;\?]+[a-zA-Z]/)
+				html.print(%{})
             else
                 html.print(ansi.scan(/./m))
             end
