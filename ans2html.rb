@@ -116,7 +116,9 @@ content = content.ansi2html
 
 # Print the output!
 print %{
-<html><head>
+<!DOCTYPE html>
+<html>
+<head>
 	<style>
 		body,html {
 			background-color: #000;
@@ -125,13 +127,13 @@ print %{
 		.fg-black 		{color: #000000}
 		.fg-red 		{color: #aa0000}
 		.fg-green		{color: #00aa00}
-		.fg-yellow 	{color: #aa5500}
+		.fg-yellow 		{color: #aa5500}
 		.fg-blue		{color: #0000aa}
 		.fg-magenta 	{color: #aa00aa}
 		.fg-cyan 		{color: #00aaaa}
 		.fg-white		{color: #c0c0c0}
 
-		.bold-fg-black 	{color: #606060}
+		.bold-fg-black 		{color: #606060}
 		.bold-fg-red 		{color: #ff5555}
 		.bold-fg-green		{color: #00ff00}
 		.bold-fg-yellow 	{color: #ffff00}
@@ -174,7 +176,7 @@ print %{
 </style>
 </head>
 <body>
-	<pre style="color: #ccc; background: #000; width: 720px; margin:auto; float: none;">
+	<pre class="fg-white bg-black" style="width: 721px; margin:auto; float: none;">
 		#{content}
 	</pre>
 </body>
